@@ -181,16 +181,15 @@ namespace log
                 }
                 std::string key, value;
                 key.push_back(_pattern[pos]);
-                //检测后面紧接着的是否是{,若是的则说明还有子格式需要处理
-                if(++pos == _pattern.size()) break;
-                if(_pattern[pos] == '{')
+                //检测后面紧接着的是否是{,若是的则说明还有子格式需要处理fe
+                if(++pos != _pattern.size() && _pattern[pos] == '{')
                 {
                     ++pos;
                     while(pos != _pattern.size() && _pattern[pos] != '}') value.push_back(_pattern[pos++]);
                     //压根没找到 }，格式有误
                     if(pos == _pattern.size())
                     {
-                        throw std::runtime_error("expected '}' after '%'");
+                        throw std::runtime_error("expected '}' after '{'");
                         return false;
                     }
                     ++pos;
