@@ -1,16 +1,11 @@
 #include <iostream>
-#include "util.hpp"
-#include "level.hpp"
+#include "format.hpp"
 using namespace std;
 
 int main()
 {
-    cout << log::toString(log::Level::DEBUG) << endl;
-    cout << log::toString(log::Level::INFO) << endl;
-    cout << log::toString(log::Level::WARNING) << endl;
-    cout << log::toString(log::Level::ERROR) << endl;
-    cout << log::toString(log::Level::FATAL) << endl;
-    cout << log::toString(log::Level::OFF) << endl;
-    cout << log::toString(log::Level::UNKNOW) << endl;
+    log::Format fmt("test%%%[test1][%d%{][%t][%p][%c][%f:%l] %m%n");
+    log::LogMsg msg("ljx", "test.cc", 8, "This is just a test", log::Level::INFO);
+    cout << fmt.format(msg) << endl;
     return 0;
 }
