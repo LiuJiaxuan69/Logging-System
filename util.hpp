@@ -9,9 +9,9 @@ namespace log
     class Date
     {
     public:
-        static size_t now()
+        static time_t now()
         {
-            return (size_t)std::time;
+            return std::time(nullptr);
         }
     };
     class File
