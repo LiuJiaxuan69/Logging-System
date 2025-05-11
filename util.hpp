@@ -3,6 +3,9 @@
 #include <iostream>
 #include <ctime>
 #include <sys/stat.h>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 namespace log
 {
@@ -42,15 +45,23 @@ namespace log
                 if (pos == std::string::npos)
                 {
                     if (!exists(pathname))
+                    #ifdef _WIN32
+                        fs::create_directory(pathname.c_str());
+                    #else
                         mkdir(pathname.c_str(), 0777);
+                    #endif
                     return;
                 }
                 else
                 {
                     std::string parent_path = pathname.substr(0, pos);
                     begin = pos + 1;
+                    #ifdef _WIN32
                     if (!exists(pathname))
+                        fs::create_directory(parent_path.c_str());
+                    #else
                         mkdir(parent_path.c_str(), 0777);
+                    #endif
                 }
             }
         }

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "message.hpp"
 #include <vector>
 #include <cassert>
@@ -33,7 +35,11 @@ namespace log
         {
             time_t t = msg._time;
             struct tm _tm;
+            #ifdef _WIN32
+            localtime_s(&_tm, &t);
+            #else
             localtime_r(&t, &_tm);
+            #endif
             char s[128];
             strftime(s, 127, _format.c_str(), &_tm);
             os << s;
@@ -118,6 +124,7 @@ namespace log
     class Format
     {
     public:
+        using ptr = std::shared_ptr<Format>;
         Format(const std::string &pattern = "[%d{%H:%M:%S}][%t][%p][%c][%f:%l] %m%n"):_pattern(pattern)
         {
             assert(parsePattern());

@@ -60,13 +60,15 @@ namespace log
     class RollBySizeLogSink : public LogSink
     {
     public:
-        RollBySizeLogSink(const std::string &filename, size_t max_size, bool prev_check = false)
+        RollBySizeLogSink(const std::string &filename, size_t max_size, bool prev_check = false, bool cst_inc = false)
             : _filename(filename),
               _max_size(max_size),
               _cur_suffix(1),
               _last_time(0),
-              _prev_check(prev_check)
+              _prev_check(prev_check),
+              _cst_inc(cst_inc)
         {
+            if(max_size == 0) throw std::runtime_error("文件大小不能为0");
             File::createDirectory(File::getPath(filename));
         }
         void log(const char *data, size_t len) override
@@ -95,14 +97,20 @@ namespace log
         {
             time_t t = log::Date::now();
             struct tm _tm;
+            #ifdef _WIN32
+            localtime_s(&_tm, &t);
+            #else
             localtime_r(&t, &_tm);
+            #endif
             char s[128];
             strftime(s, 127, "%Y%m%d%H%M%S", &_tm);
             std::string ret = _filename + s;
-            if (_last_time != t)
-                _cur_suffix = 1;
+            if(!_cst_inc)
+            {
+                if (_last_time != t) _cur_suffix = 1;
+                _last_time = t;
+            }
             ret += "-" + std::to_string(_cur_suffix++);
-            _last_time = t;
             return ret;
         }
         ~RollBySizeLogSink()
@@ -119,6 +127,8 @@ namespace log
         size_t _last_time;
         bool _prev_check; // 是否提前检查下一次写入数据后文件大小会不会
         // 超出，若不提前检查，可能会在文件大小超出范围后被检查出来
+        bool _cst_inc; //是否让文件后缀不断增加，若不断增加，即便文件名不同，也会继承上次的文件后缀加一作为该文件的后缀，
+        //否则每次文件名不同的时候会使用新的后缀（后缀从1开始重新计算）
     };
 
     template <class T, class... Args>
@@ -172,6 +182,10 @@ namespace log
               _is_by_system(is_by_system),
               _last_time(0)
         {
+            if(time_gap == 0)
+            {
+                throw std::runtime_error("不能使得文件创建的时间间隔为0");
+            }
             File::createDirectory(File::getPath(filename));
         }
 
@@ -207,7 +221,11 @@ namespace log
         {
             time_t t = log::Date::now();
             struct tm _tm;
+            #ifdef _WIN32
+            localtime_s(&_tm, &t);
+            #else
             localtime_r(&t, &_tm);
+            #endif
             char s[128];
             strftime(s, 127, "%Y%m%d%H%M%S", &_tm);
             std::string ret = _filename + s;
