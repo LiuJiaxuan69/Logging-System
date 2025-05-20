@@ -45,7 +45,7 @@ namespace log
                 {
                     std::unique_lock<std::mutex> lock(_mtx);
                     //只有在任务真正被处理完且_running为false的时候才能退出事件循环，而后回收该线程
-                    if(!_running && _pop_task.empty()) return;
+                    if(!_running && _push_task.empty()) return;
                     //否则继续任务处理
                     //stop或者有任务待处理都可以直接继续运行代码，无需阻塞
                     _pop_cond.wait(lock, [&](){return !_push_task.empty() || !_running;});
