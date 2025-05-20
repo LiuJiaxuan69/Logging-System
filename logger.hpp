@@ -4,6 +4,7 @@
 #include "level.hpp"
 #include "sink.hpp"
 #include "message.hpp"
+#include "looper.hpp"
 #include <mutex>
 #include <format>
 
@@ -69,8 +70,9 @@ namespace log
         class Builder
         {
         public:
-            Builder(Level limit_level = Level::DEBUG)
-                :_limit_level(limit_level)
+            Builder(Level limit_level = Level::DEBUG, bool check_space = true)
+                :_limit_level(limit_level),
+                _check_space(check_space)
             {
             }
             void buildLoggerName(const std::string &name)
@@ -99,6 +101,7 @@ namespace log
                 auto sink = sinkCreate<T>(std::forward<Args>(args)...);
                 _sinks.push_back(sink);
             }
+            void buildCheckWay(bool check_space) { _check_space = check_space; }
             virtual ptr build() = 0;
 
         protected:
@@ -107,6 +110,7 @@ namespace log
             Format::ptr _format;
             std::atomic<Level> _limit_level;
             LoggerType _type;
+            bool _check_space; //异步日志器使用
         };
 
     protected:
@@ -126,9 +130,9 @@ namespace log
             LogMsg lmsg(_logger_name, filename, line, std::move(msg), level);
             std::stringstream ss;
             _format->format(ss, lmsg);
-            logSink(ss.str());
+            logManage(ss.str());
         }
-        virtual void logSink(const std::string &msg) = 0;
+        virtual void logManage(const std::string &msg) = 0;
         std::mutex _mtx;
         std::string _logger_name;
         std::vector<LogSink::ptr> _sinks;
@@ -136,6 +140,7 @@ namespace log
         std::atomic<Level> _limit_level;
     };
 
+    //同步日志器
     class SyncLogger : public Logger
     {
     public:
@@ -144,12 +149,41 @@ namespace log
             : Logger(logger_name, format, sinks, limit_level) {}
 
     private:
-        void logSink(const std::string &msg) override
+        void logManage(const std::string &msg) override
+        {
+            std::unique_lock<std::mutex> lock(_mtx);
+            if (_sinks.empty()) { return; }
+            for (auto &sink : _sinks)
+                sink->log(msg.c_str(), msg.size());
+        }
+    };
+
+    //异步日志器
+    class AsyncLogger : public Logger
+    {
+    public:
+        AsyncLogger(const std::string &logger_name, Format::ptr format,
+                   std::vector<LogSink::ptr> &sinks, Level limit_level = Level::DEBUG, bool check_space = true)
+            : Logger(logger_name, format, sinks, limit_level),
+            _looper(std::make_shared<AsyncLooper>(std::bind(&AsyncLogger::logSink, this, std::placeholders::_1), check_space)){}
+
+    private:
+        
+        void logManage(const std::string &msg) override
         {
             std::unique_lock<std::mutex> lock(_mtx);
             for (auto &sink : _sinks)
                 sink->log(msg.c_str(), msg.size());
         }
+
+        void logSink(Buffer &buffer)
+        {
+            if (_sinks.empty()) { return; }
+            for(auto &sink: _sinks)
+                sink->log(buffer.begin(), buffer.readAbleSize());
+        }
+    private:
+        AsyncLooper::ptr _looper;
     };
     // class AsyncLogger : public Logger
     // {
@@ -180,10 +214,7 @@ namespace log
             {
                 return std::make_shared<SyncLogger>(_logger_name, _format, _sinks, _limit_level);
             }
-            else
-            {
-                // return std::make_shared<AsyncLogger>(_logger_name, _format, _sinks, _limit_level);
-            }
+            return std::make_shared<AsyncLogger>(_logger_name, _format, _sinks, _limit_level, _check_space);
         }
     };
 };
