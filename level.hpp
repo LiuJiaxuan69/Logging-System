@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-namespace log
+namespace ljxlog
 {
     enum class Level
     {
@@ -28,4 +28,4 @@ namespace log
             default:            return "UNKNOWN";
         }
     }
-}
+};

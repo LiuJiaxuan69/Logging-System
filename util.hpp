@@ -7,7 +7,7 @@
 
 namespace fs = std::filesystem;
 
-namespace log
+namespace ljxlog
 {
     class Date
     {

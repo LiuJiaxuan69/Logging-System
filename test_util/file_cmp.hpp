@@ -4,7 +4,7 @@
 #include <vector>
 #include <cstring>
 
-namespace log::test_util
+namespace ljxlog::test_util
 {
     const size_t BUFFER_SIZE = 4096; // 4KB buffer
     // 包装成类，防止不必要函数暴露

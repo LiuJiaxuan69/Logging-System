@@ -1,11 +1,11 @@
 #pragma once
 
-#include "level.hpp"
-#include "util.hpp"
 #include <memory>
 #include <thread>
+#include "level.hpp"
+#include "util.hpp"
 
-namespace log
+namespace ljxlog
 {
     struct LogMsg {
         size_t _line;//行号
