@@ -79,7 +79,6 @@ int main() {
 	- FixedFileLogSink：固定文件
 	- RollBySizeLogSink：按大小滚动（写前预检查，按换行切割，精确控制文件大小）
 	- RollByTimeLogSink：按时间滚动
-	- TrashFileSink：固定容量环形文件，循环覆盖，真实磁盘写但不增长体积（适合压力测试）
 
 ## 落地扩展与自定义
 
