@@ -42,7 +42,7 @@ namespace ljxlog
         using ptr = std::shared_ptr<AsyncLooper>;
     public:
       // cb：消费者回调
-      AsyncLooper(const Func &cb)
+        AsyncLooper(const Func &cb)
             : _task_manage(cb),
               _running(true),
               _looper(&AsyncLooper::loop, this) {}

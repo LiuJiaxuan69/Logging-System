@@ -4,6 +4,7 @@
 #include <fstream>
 #include <cassert>
 #include <atomic>
+#include <mutex>
 #include "util.hpp"
 
 namespace ljxlog
